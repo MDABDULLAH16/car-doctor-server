@@ -26,7 +26,7 @@ async function run() {
     await client.connect();
 
     const serviceCollection = client.db("carDoctorDB").collection("services");
-
+    const bookingsCollection = client.db("carDoctorDB").collection("bookings");
     app.get("/services", async (req, res) => {
       const result = await serviceCollection.find().toArray();
       res.send(result);
@@ -39,9 +39,15 @@ async function run() {
         // Sort matched documents in descending order by rating
         // sort: { "imdb.rating": -1 },
         // Include only the `title` and `imdb` fields in the returned document
-        projection: { title: 1, price: 1, service_id: 1 },
+        projection: { title: 1, price: 1, img: 1, service_id: 1 },
       };
       const result = await serviceCollection.findOne(query, options);
+      res.send(result);
+    });
+
+    app.post("/bookings", async (req, res) => {
+      const query = req.body;
+      const result = await bookingsCollection.insertOne(query);
       res.send(result);
     });
 
