@@ -28,6 +28,29 @@ const client = new MongoClient(uri, {
   },
 });
 
+//middlewares
+const logger = async (req, res, next) => {
+  console.log("called:", req.host, req.originalUrl);
+  next();
+};
+
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).send({ message: "UnAuthorized User" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Invalid user" });
+    }
+    //if token is valid then it would be decoded
+    console.log("decoded massage", decoded);
+    // Add the decoded user information to the request object
+    req.user = decoded;
+
+    next();
+  });
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -37,7 +60,7 @@ async function run() {
     const bookingsCollection = client.db("carDoctorDB").collection("bookings");
 
     //auth api
-    app.post("/jwt", async (req, res) => {
+    app.post("/jwt", logger, verifyToken, async (req, res) => {
       const user = req.body;
       console.log(user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
@@ -77,8 +100,9 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
-      console.log("tok tok token", req.cookies.token);
+    app.get("/bookings", logger, verifyToken, async (req, res) => {
+      // console.log("tok tok token", req.cookies.token);
+      console.log("user from valid token", req.user);
       let query = {};
       if (req.query?.email) {
         query = { email: req.query.email };
