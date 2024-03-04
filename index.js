@@ -35,7 +35,7 @@ const logger = async (req, res, next) => {
 };
 
 const verifyToken = async (req, res, next) => {
-  const token = req.cookies.token;
+  const token = req.cookies?.token;
   if (!token) {
     return res.status(401).send({ message: "UnAuthorized User" });
   }
@@ -47,7 +47,6 @@ const verifyToken = async (req, res, next) => {
     console.log("decoded massage", decoded);
     // Add the decoded user information to the request object
     req.user = decoded;
-
     next();
   });
 };
@@ -102,7 +101,11 @@ async function run() {
 
     app.get("/bookings", logger, verifyToken, async (req, res) => {
       // console.log("tok tok token", req.cookies.token);
-      console.log("user from valid token", req.user);
+      console.log("user from valid token", req.user.user.email);
+      //for same user and same user data
+      if (req.query.email !== req.user?.user?.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
       let query = {};
       if (req.query?.email) {
         query = { email: req.query.email };
