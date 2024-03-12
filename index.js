@@ -29,27 +29,27 @@ const client = new MongoClient(uri, {
 });
 
 //middlewares
-// const logger = async (req, res, next) => {
-//   console.log("called:", req.host, req.originalUrl);
-//   next();
-// };
+const logger = async (req, res, next) => {
+  console.log("called:", req.host, req.originalUrl);
+  next();
+};
 
-// const verifyToken = async (req, res, next) => {
-//   const token = req.cookies?.token;
-//   if (!token) {
-//     return res.status(401).send({ message: "UnAuthorized User" });
-//   }
-//   jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
-//     if (err) {
-//       return res.status(403).send({ message: "Invalid user" });
-//     }
-//     //if token is valid then it would be decoded
-//     console.log("decoded massage", decoded);
-//     // Add the decoded user information to the request object
-//     req.user = decoded;
-//     next();
-//   });
-// };
+const verifyToken = async (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "UnAuthorized User" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Invalid user" });
+    }
+    //if token is valid then it would be decoded
+    console.log("decoded massage", decoded);
+    // Add the decoded user information to the request object
+    req.user = decoded;
+    next();
+  });
+};
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -106,12 +106,13 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", logger, verifyToken, async (req, res) => {
       // console.log("tok tok token", req.cookies.token);
-      console.log("user from valid token", req.user.user.email);
+      // console.log("user from valid token", req.cookies);
+
       //for same user and same user data
-      if (req.query.email !== req.user?.user?.email) {
-        return res.status(403).send({ message: "forbidden access" });
+      if (req?.query?.email !== req?.user?.email) {
+        return res.status(403).send({ message: "unAuthorized access" });
       }
       let query = {};
       if (req.query?.email) {
