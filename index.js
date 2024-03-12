@@ -60,11 +60,12 @@ async function run() {
 
     //auth api
     app.post("/jwt", async (req, res) => {
-      const email = req.body;
-      const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "1hr",
       });
       res
+        //set cookie on client side cookie
         .cookie("token", token, {
           httpOnly: true,
           secure: true,
@@ -72,6 +73,14 @@ async function run() {
         })
         .send({ success: true });
     });
+
+    //remove cookie after logout;
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log("log out user", user);
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
+
     //service api
     app.get("/services", async (req, res) => {
       const result = await serviceCollection.find().toArray();
